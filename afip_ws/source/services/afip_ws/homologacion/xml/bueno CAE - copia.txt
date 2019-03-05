@@ -1,0 +1,1 @@
+{"FECAESolicitarResult":{"FeCabResp":{"Cuit":20267565393,"PtoVta":4000,"CbteTipo":1,"FchProceso":"20190305024211","CantReg":1,"Resultado":"A","Reproceso":"N"},"FeDetResp":{"FECAEDetResponse":{"Concepto":1,"DocTipo":80,"DocNro":20219021810,"CbteDesde":1279,"CbteHasta":1279,"CbteFch":"20190305","Resultado":"A","CAE":"69103731529305","CAEFchVto":"20190315"}}}}
