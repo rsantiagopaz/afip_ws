@@ -88,32 +88,24 @@ class Wsaa
 		);
            
 		$loginCms = $soapClient->loginCms(array('in0' => $CMS));
-		file_put_contents($path . "xml/loginCms_LastRequest.xml", $soapClient->__getLastRequest());
-		file_put_contents($path . "xml/loginCms_LastResponse.xml", $soapClient->__getLastResponse());
+		//file_put_contents($path . "xml/loginCms_LastRequest.xml", $soapClient->__getLastRequest());
+		//file_put_contents($path . "xml/loginCms_LastResponse.xml", $soapClient->__getLastResponse());
 		
   		if (is_soap_fault($loginCms)) {
-  			//exit("SOAP Fault: " . $results->faultcode . "\n" . $results->faultstring . "\n");
-  			//throw new Exception($results->faultcode . " | " . $results->faultstring . " | " . $results->detail);
-  			
-  			
-  			//echo "<br><br>soap_fault: " . json_encode($loginCms) . "<br><br>";
-  			
-			$sql = "INSERT ws_wsaa SET texto=' '";
-			
+	
 			$resultado->resultado = "R";
-			$resultado->texto = json_encode($loginCms);
+			$resultado->texto_respuesta = json_encode($loginCms);
 
   		} else {
   			$loginCmsReturn = $loginCms->loginCmsReturn;
   			
   			file_put_contents($path . "xml/TA.xml", $loginCmsReturn);
   			
-  			$sql = "INSERT ws_wsaa SET texto=' '";
-
   			$resultado->resultado = "A";
-  			$resultado->texto = $loginCmsReturn;
+  			$resultado->texto_respuesta = $loginCmsReturn;
   		}
   		
+  		$sql = "INSERT ws_wsaa SET resultado='" . $resultado->resultado . "', texto_respuesta='" . $resultado->texto_respuesta . "'";
 		$this->mysqli->query($sql);
 		$insert_id = $this->mysqli->insert_id;
 		

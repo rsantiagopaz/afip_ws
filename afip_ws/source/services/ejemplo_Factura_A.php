@@ -1,6 +1,12 @@
 <?php
 
-require_once("class/comp/Afip_ws.php");
+require_once("class/comp/Afip_ws.class.php");
+
+
+$mysqli = new mysqli("$servidor", "$usuario", "$password", "afip_ws_" . $modo);
+$mysqli->query("SET NAMES 'utf8'"); 
+
+
 		
 		
 		$p = array();
@@ -16,8 +22,8 @@ require_once("class/comp/Afip_ws.php");
 		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["Concepto"] = 1;
 		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["DocTipo"] = 80;			//80=CUIL
 		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["DocNro"] = 20219021810;
-		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] = 1282;
-		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] = 1282;
+		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] = 1284;
+		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] = 1284;
 		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteFch"] = date('Ymd');	// fecha emision de factura
 		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["ImpNeto"] = 100;			// neto gravado
 		$p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["ImpTotConc"] = 0;		// no gravado
@@ -99,10 +105,50 @@ require_once("class/comp/Afip_ws.php");
 	*/
 	
 	
-$a = array($p);
-$Afip_ws = new class_Afip_ws;
-$resultado = $Afip_ws->method_FECAESolicitar($a, null);
+
+$Afip_ws = new Afip_ws;
+$resultado = $Afip_ws->FECAESolicitar($p);
 echo json_encode($resultado);
+
+if (isset($resultado->id_ws_documento)) {
+	$sql = "SELECT * FROM ws_wsfev1 WHERE id_ws_wsfev1='" . $resultado->id_ws_wsfev1 . "'";
+	$rs = $mysqli->query($sql);
+	$row = $rs->fetch_object();
+	
+	$json = json_decode($row->texto_respuesta);
+	
+	echo "<br><br>";
+	echo "CAE: " . $json->FECAESolicitarResult->FeDetResp->FECAEDetResponse->CAE;
+	echo "<br>";
+	echo "CAEFchVto: " . $json->FECAESolicitarResult->FeDetResp->FECAEDetResponse->CAEFchVto;
+	echo "<br><br>";
+	
+} else if (isset($resultado->id_ws_wsfev1)) {
+	$sql = "SELECT * FROM ws_wsfev1 WHERE id_ws_wsfev1='" . $resultado->id_ws_wsfev1 . "'";
+	$rs = $mysqli->query($sql);
+	$row = $rs->fetch_object();
+	
+	$json = json_decode($row->texto_respuesta);
+	
+	echo "<br><br>";
+	echo "Err Code: " . $json->FECAESolicitarResult->Errors->Err->Code;
+	echo "<br>";
+	echo "Err Msg: " . $json->FECAESolicitarResult->Errors->Err->Msg;
+	echo "<br><br>";
+	
+} else if (isset($resultado->id_ws_wsaa)) {
+	$sql = "SELECT * FROM ws_wsaa WHERE id_ws_wsaa='" . $resultado->id_ws_wsaa . "'";
+	$rs = $mysqli->query($sql);
+	$row = $rs->fetch_object();
+	
+	$json = json_decode($row->texto_respuesta);
+	
+	echo "<br><br>";
+	echo "faultcode: " . $json->faultcode;
+	echo "<br>";
+	echo "faultstring: " . $json->faultstring;
+	echo "<br><br>";
+}
 	
 
 ?>

@@ -17,6 +17,8 @@ class Wsfev1
 	public function FECAESolicitar($p) {
 		global $path, $wsfev1_url;
 		
+		$resultado = new stdClass;
+		
 		if ($p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] == 0) $p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] = 1;
 		if ($p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] == 0) $p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] = 1;
 		
@@ -34,13 +36,33 @@ class Wsfev1
 			)
 		);
 	
-		$results = $soapClient->FECAESolicitar($p);
+		$FECAESolicitar = $soapClient->FECAESolicitar($p);
 
 		//$e = $this->_checkErrors($results, 'FECAESolicitar');
 		
-		file_put_contents($path . "xml/CAE.txt", json_encode($results));
+  		if (is_soap_fault($FECAESolicitar)) {
+			$resultado->resultado = "R";
+			$resultado->texto_respuesta = json_encode($FECAESolicitar);
+
+  		} else {
+  			echo "<br><br>" . json_encode($FECAESolicitar) . "<br><br>";
+  			
+  			$resultado->resultado = $FECAESolicitar->FECAESolicitarResult->FeCabResp->Resultado;
+  			$resultado->texto_respuesta = json_encode($FECAESolicitar);
+  			
+  			file_put_contents($path . "xml/CAE.txt", $resultado->texto_respuesta);
+  		}
+  		
+  		unset($p["Auth"]);
+  		$resultado->texto_solicitud = json_encode($p);
 		
-		return $results;
+  		$sql = "INSERT ws_wsfev1 SET resultado='" . $resultado->resultado . "', texto_solicitud='" . $resultado->texto_solicitud . "', texto_respuesta='" . $resultado->texto_respuesta . "'";
+		$this->mysqli->query($sql);
+		$insert_id = $this->mysqli->insert_id;
+		
+		$resultado->id_ws_wsfev1 = $insert_id;
+  		
+  		return $resultado;
 	}
 }
 

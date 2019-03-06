@@ -5,7 +5,7 @@ require_once("Wsaa.class.php");
 require_once("Wsfev1.class.php");
 
 
-class class_Afip_ws
+class Afip_ws
 {
  	protected $mysqli;
  	
@@ -28,10 +28,8 @@ class class_Afip_ws
 	}
 
 
-	public function method_FECAESolicitar($params, $error) {
+	public function FECAESolicitar($p) {
 		global $path, $CUIT;
-		
-		$p = $params[0];
 		
 		$resultado = new stdClass;
 		
@@ -44,7 +42,15 @@ class class_Afip_ws
 				$expirationTime = $TA->header->expirationTime;
 				$expirationTime = substr($expirationTime, 0, 10) . " " . substr($expirationTime, 11, 8);
 				
-				if ($expirationTime < date("Y-m-d h:i:s")) $TA = false;
+				if ($expirationTime < date("Y-m-d h:i:s")) {
+					$TA = false;
+				} else {
+					$sql = "SELECT id_ws_wsaa FROM ws_wsaa WHERE resultado='A' ORDER BY id_ws_wsaa DESC LIMIT 1";
+					$rs = $this->mysqli->query($sql);
+					$row = $rs->fetch_object();
+					
+					$resultado->id_ws_wsaa = $row->id_ws_wsaa;
+				}
 			}
 		}
 		
@@ -55,9 +61,9 @@ class class_Afip_ws
 			
 			//echo "<br><br>" . json_encode($TA) . "<br><br>";
 			
-			$resultado->id_wsaa = $CallWSAA->id_wsaa;
+			$resultado->id_ws_wsaa = $CallWSAA->id_ws_wsaa;
 			
-			if ($CallWSAA->resultado == "A") $TA = new SimpleXMLElement($CallWSAA->texto);
+			if ($CallWSAA->resultado == "A") $TA = new SimpleXMLElement($CallWSAA->texto_respuesta);
 		}
 		
 		if ($TA) {
@@ -69,21 +75,26 @@ class class_Afip_ws
 			$FECAESolicitar = $this->Wsfev1->FECAESolicitar($p);
 			
 			$resultado->id_ws_wsfev1 = $FECAESolicitar->id_ws_wsfev1;
-		}
-		
-		$sql = "INSERT ws_request SET id_ws_wsaa=" . $resultado->id_ws_wsaa . ", id_ws_wsfev1=" . $resultado->id_ws_wsfev1;
-		$this->mysqli->query($sql);
-		$insert_id = $this->mysqli->insert_id;
-		
-		$resultado->id_ws_request = $insert_id;
-		
-		
-		if ($FECAESolicitar->resultado != "R") {
-			$sql = "INSERT ws_documento SET id_ws_request=" . $resultado->id_ws_request . ", id_ws_wsaa=" . $resultado->id_ws_wsaa . ", id_ws_wsfev1=" . $resultado->id_ws_wsfev1;
+
+			$sql = "INSERT ws_solicitud SET id_ws_wsaa='" . $resultado->id_ws_wsaa . "', id_ws_wsfev1='" . $resultado->id_ws_wsfev1 . "'";
 			$this->mysqli->query($sql);
 			$insert_id = $this->mysqli->insert_id;
+		
+			$resultado->id_ws_solicitud = $insert_id;
 			
-			$resultado->id_ws_documento = $insert_id;
+			if ($FECAESolicitar->resultado != "R") {
+				$sql = "INSERT ws_documento SET id_ws_solicitud='" . $resultado->id_ws_solicitud . "', id_ws_wsaa='" . $resultado->id_ws_wsaa . "', id_ws_wsfev1='" . $resultado->id_ws_wsfev1 . "'";
+				$this->mysqli->query($sql);
+				$insert_id = $this->mysqli->insert_id;
+				
+				$resultado->id_ws_documento = $insert_id;
+			}
+		} else {
+			$sql = "INSERT ws_solicitud SET id_ws_wsaa='" . $resultado->id_ws_wsaa . "'";
+			$this->mysqli->query($sql);
+			$insert_id = $this->mysqli->insert_id;
+		
+			$resultado->id_ws_solicitud = $insert_id;			
 		}
 		
 		
