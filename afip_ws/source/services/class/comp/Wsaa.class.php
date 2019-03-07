@@ -88,12 +88,14 @@ class Wsaa
 		);
            
 		$loginCms = $soapClient->loginCms(array('in0' => $CMS));
-		//file_put_contents($path . "xml/loginCms_LastRequest.xml", $soapClient->__getLastRequest());
-		//file_put_contents($path . "xml/loginCms_LastResponse.xml", $soapClient->__getLastResponse());
+		file_put_contents($path . "xml/loginCms_LastRequest.xml", $soapClient->__getLastRequest());
+		file_put_contents($path . "xml/loginCms_LastResponse.xml", $soapClient->__getLastResponse());
 		
   		if (is_soap_fault($loginCms)) {
+  			
+  			// Error de SOAP
 	
-			$resultado->resultado = "R";
+			$resultado->resultado = "S";
 			$resultado->texto_respuesta = json_encode($loginCms);
 
   		} else {

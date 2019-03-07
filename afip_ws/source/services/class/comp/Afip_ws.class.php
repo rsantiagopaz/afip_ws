@@ -54,6 +54,9 @@ class Afip_ws
 			}
 		}
 		
+		$sql = "START TRANSACTION";
+		$this->mysqli->query($sql);
+		
 		if (! $TA) {
 			$this->Wsaa->CreateTRA("wsfe");
 			$CMS = $this->Wsaa->SignTRA();
@@ -67,10 +70,25 @@ class Afip_ws
 		}
 		
 		if ($TA) {
+			/*
 			$p["Auth"] = array();
 			$p["Auth"]["Token"] = $TA->credentials->token;
 			$p["Auth"]["Sign"] = $TA->credentials->sign;
 			$p["Auth"]["Cuit"] = $CUIT;
+			*/
+			
+			/*
+			$p->Auth = new stdClass;
+			$p->Auth->Token = $TA->credentials->token;
+			$p->Auth->Sign = $TA->credentials->sign;
+			$p->Auth->Cuit = $CUIT;
+			*/
+			
+			$p["Auth"] = array(
+				"Token"	=> $TA->credentials->token,
+				"Sign"	=> $TA->credentials->sign,
+				"Cuit"	=> $CUIT,
+			);
 		
 			$FECAESolicitar = $this->Wsfev1->FECAESolicitar($p);
 			
@@ -82,7 +100,7 @@ class Afip_ws
 		
 			$resultado->id_ws_solicitud = $insert_id;
 			
-			if ($FECAESolicitar->resultado != "R") {
+			if ($FECAESolicitar->resultado == "A" || $FECAESolicitar->resultado == "P") {
 				$sql = "INSERT ws_documento SET id_ws_solicitud='" . $resultado->id_ws_solicitud . "', id_ws_wsaa='" . $resultado->id_ws_wsaa . "', id_ws_wsfev1='" . $resultado->id_ws_wsfev1 . "'";
 				$this->mysqli->query($sql);
 				$insert_id = $this->mysqli->insert_id;
@@ -96,6 +114,10 @@ class Afip_ws
 		
 			$resultado->id_ws_solicitud = $insert_id;			
 		}
+		
+		
+		$sql = "COMMIT";
+		$this->mysqli->query($sql);
 		
 		
 		return $resultado;

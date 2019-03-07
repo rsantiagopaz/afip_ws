@@ -19,8 +19,8 @@ class Wsfev1
 		
 		$resultado = new stdClass;
 		
-		if ($p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] == 0) $p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] = 1;
-		if ($p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] == 0) $p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] = 1;
+		//if ($p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] == 0) $p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteDesde"] = 1;
+		//if ($p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] == 0) $p["FeCAEReq"]["FeDetReq"]["FECAEDetRequest"]["CbteHasta"] = 1;
 		
     
 		$soapClient = new SoapClient(
@@ -37,24 +37,42 @@ class Wsfev1
 		);
 	
 		$FECAESolicitar = $soapClient->FECAESolicitar($p);
+		//file_put_contents($path . "xml/FECAESolicitar_LastRequest.xml", $soapClient->__getLastRequest());
+		//file_put_contents($path . "xml/FECAESolicitar_LastResponse.xml", $soapClient->__getLastResponse());
 
 		//$e = $this->_checkErrors($results, 'FECAESolicitar');
 		
   		if (is_soap_fault($FECAESolicitar)) {
-			$resultado->resultado = "R";
+  			
+  			// Error de SOAP
+  			
+			$resultado->resultado = "S";
 			$resultado->texto_respuesta = json_encode($FECAESolicitar);
 
   		} else {
   			echo "<br><br>" . json_encode($FECAESolicitar) . "<br><br>";
   			
   			$resultado->resultado = $FECAESolicitar->FECAESolicitarResult->FeCabResp->Resultado;
-  			$resultado->texto_respuesta = json_encode($FECAESolicitar);
+  			//$resultado->texto_respuesta = json_encode($FECAESolicitar);
+  			$resultado->texto_respuesta = $soapClient->__getLastResponse();
   			
-  			file_put_contents($path . "xml/CAE.txt", $resultado->texto_respuesta);
+  			//file_put_contents($path . "xml/CAE.txt", $resultado->texto_respuesta);
   		}
   		
+  		//unset($p->Auth);
   		unset($p["Auth"]);
+  		
   		$resultado->texto_solicitud = json_encode($p);
+  		
+  		$aux = (array) json_decode($resultado->texto_solicitud);
+  		echo "<br><br>" . "<br><br>";
+  		var_dump($aux);
+  		echo "<br><br>" . "<br><br>";
+  		echo json_encode($aux);
+  		echo "<br><br>" . "<br><br>";
+  		var_dump($aux["FeCAEReq"]->FeCabReq->PtoVta);
+  		echo "<br><br>" . "<br><br>";
+  		
 		
   		$sql = "INSERT ws_wsfev1 SET resultado='" . $resultado->resultado . "', texto_solicitud='" . $resultado->texto_solicitud . "', texto_respuesta='" . $resultado->texto_respuesta . "'";
 		$this->mysqli->query($sql);
