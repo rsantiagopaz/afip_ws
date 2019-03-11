@@ -203,11 +203,18 @@ if (isset($resultado->id_ws_documento)) {
 	$xml = new SimpleXMLElement($row->texto_respuesta);
 	$FECAESolicitarResponse = $xml->children("soap", true)->Body->children()->FECAESolicitarResponse;
 	
-	echo "<br><br>";
-	echo "CAE: " . $FECAESolicitarResponse->FECAESolicitarResult->FeDetResp->FECAEDetResponse->CAE;
-	echo "<br>";
-	echo "CAEFchVto: " . $FECAESolicitarResponse->FECAESolicitarResult->FeDetResp->FECAEDetResponse->CAEFchVto;
-	echo "<br><br>";
+	$FECAEDetResponse = $FECAESolicitarResponse->FECAESolicitarResult->FeDetResp->FECAEDetResponse;
+	if (count($FECAEDetResponse) > 0) {
+		foreach ($FECAEDetResponse as $item) {
+			echo "<br><br>";
+			echo "CAE: " . $item->CAE;
+			echo "<br>";
+			echo "CAEFchVto: " . $item->CAEFchVto;
+			echo "<br><br>";
+		}
+	}
+	
+
 	
 } else if (isset($resultado->id_ws_wsfev1)) {
 	
@@ -242,23 +249,28 @@ if (isset($resultado->id_ws_documento)) {
 		
 		$Errors = $FECAESolicitarResponse->FECAESolicitarResult->Errors;
 		if (count($Errors) > 0) {
-			foreach ($Errors->Err as $Err) {
+			foreach ($Errors->Err as $item) {
 				echo "<br><br>";
-				echo "Err Code: " . $Err->Code;
+				echo "Err Code: " . $item->Code;
 				echo "<br>";
-				echo "Err Msg: " . $Err->Msg;
+				echo "Err Msg: " . $item->Msg;
 				echo "<br><br>";
 			}
 		}
-	
-		$Observaciones = $FECAESolicitarResponse->FECAESolicitarResult->FeDetResp->FECAEDetResponse->Observaciones;
-		if (count($Observaciones) > 0) {
-			foreach ($Observaciones->Obs as $Obs) {
-				echo "<br><br>";
-				echo "Obs Code: " . $Obs->Code;
-				echo "<br>";
-				echo "Obs Msg: " . $Obs->Msg;
-				echo "<br><br>";
+
+		$FECAEDetResponse = $FECAESolicitarResponse->FECAESolicitarResult->FeDetResp->FECAEDetResponse;
+		if (count($FECAEDetResponse) > 0) {
+			foreach ($FECAEDetResponse as $item) {
+				$Observaciones = $item->Observaciones;
+				if (count($Observaciones) > 0) {
+					foreach ($Observaciones->Obs as $item) {
+						echo "<br><br>";
+						echo "Obs Code: " . $item->Code;
+						echo "<br>";
+						echo "Obs Msg: " . $item->Msg;
+						echo "<br><br>";
+					}
+				}
 			}
 		}
 	}
